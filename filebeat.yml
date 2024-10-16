@@ -1,0 +1,18 @@
+filebeat.inputs:
+- type: filestream
+  id: my-unique-identifier
+  enabled: true
+  paths:
+    - S:/path/to/entities/cliente/tech/source/*
+  ignore_older: 24h
+  close_inactive: 5m
+  scan_frequency: 10s
+  clean_inactive: 72h
+  processors:
+    - add_fields:
+        target: ''
+        fields:
+          fullyqualifiedbeatname: "my-unique-identifier"
+          
+output.logstash:
+  hosts: ["localhost:5044"]
