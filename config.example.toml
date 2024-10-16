@@ -1,0 +1,61 @@
+version = "1.0.0"
+developer = "Your Name <your.email@example.com>"
+
+[company_example]
+name = "Example Company"
+
+# ---------------------------------------- #
+# - Configuration for Various Technology - #
+# ---------------------------------------- #
+
+# Example for a generic technology integration
+[company_example.technology_one]
+enabled = true
+source_name = "Technology One"
+base_url = "http://example.com"
+api_token = "your_api_token_here"
+expiration_date_token = 2024-12-31T23:59:59-04:00
+authentication = "Bearer"
+log_sources_ids = [101, 102, 103]
+max_num_files = 10
+max_file_size = "10 MB"
+
+[company_example.technology_one.source_one]
+enabled = true
+name = "Source One"
+endpoint = "/api/source_one"
+method = "GET"
+headers = { Filter = "(status eq 'active')" }
+querystring = { top = 100, startDateTime = "10 minutes ago", endDateTime = "now" }
+
+[company_example.technology_one.source_two]
+enabled = true
+name = "Source Two"
+endpoint = "/api/source_two"
+method = "POST"
+headers = { Authorization = "Bearer your_token_here" }
+querystring = { limit = 50, startDateTime = "10 minutes ago", endDateTime = "now" }
+
+# Example for another technology integration
+[company_example.technology_two]
+enabled = false
+source_name = "Technology Two"
+base_url = "http://example2.com"
+api_token = "your_second_api_token_here"
+authentication = "Bearer"
+log_sources_ids = [201, 202, 203]
+max_num_files = 5
+max_file_size = "5 MB"
+
+[company_example.technology_two.source_one]
+enabled = true
+name = "Source One for Technology Two"
+endpoint = "/api/v1/logs"
+method = "GET"
+headers = { Filter = "(level eq 'error')" }
+[company_example.technology_two.source_one.querystring]
+orderBy = "loggedDateTime desc"
+top = 200
+labels = "matched"
+startDateTime = { type = "ISO8601", value = "5 minutes ago" }
+endDateTime = { type = "ISO8601", value = "just now" }
