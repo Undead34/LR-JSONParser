@@ -12,7 +12,7 @@ class SourceConfig:
     method: str
     headers: Dict[str, Any] = field(default_factory=dict)
     querystring: Dict[str, Any] = field(default_factory=dict)
-    dependents: List[str] = field(default_factory=list)
+    dependencies: List[str] = field(default_factory=list)
     extract_from: Optional[str] = None
 
 @dataclass
@@ -98,7 +98,7 @@ def load_config(file_path: str) -> Config:
                     method=source_data.get("method", ""),
                     headers=source_data.get("headers", {}),
                     querystring=source_data.get("querystring", {}),
-                    dependents=source_data.get("dependents", []),
+                    dependencies=source_data.get("dependencies", []),
                     extract_from=source_data.get("extract_from", None),
                 )
                 
