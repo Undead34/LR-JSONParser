@@ -1,61 +1,74 @@
 version = "1.0.0"
 developer = "Your Name <your.email@example.com>"
 
-[company_example]
-name = "Example Company"
+# -------------------------------------------------- #
+# - Configuration for a Generic Entity - #
+# -------------------------------------------------- #
 
-# ---------------------------------------- #
-# - Configuration for Various Technology - #
-# ---------------------------------------- #
+# Definición de una entidad genérica
+[entity_generic]
+name = "Generic Entity" # Nombre de la entidad o empresa que se está configurando
 
-# Example for a generic technology integration
-[company_example.technology_one]
-enabled = true
-source_name = "Technology One"
-base_url = "http://example.com"
-api_token = "your_api_token_here"
-expiration_date_token = 2024-12-31T23:59:59-04:00
-authentication = "Bearer"
-log_sources_ids = [101, 102, 103]
-max_num_files = 10
-max_file_size = "10 MB"
+# ----------------------------------------------------- #
+# - Configuration for a Technology within the Entity - #
+# ----------------------------------------------------- #
 
-[company_example.technology_one.source_one]
-enabled = true
-name = "Source One"
-endpoint = "/api/source_one"
-method = "GET"
-headers = { Filter = "(status eq 'active')" }
-querystring = { top = 100, startDateTime = "10 minutes ago", endDateTime = "now" }
+# Definición de una tecnología dentro de la entidad
+[entity_generic.technology_one]
+enabled = true # Activa o desactiva la tecnología completa, si está en 'false' todas las fuentes se desactivan automáticamente.
+source_name = "Technology One" # Nombre legible de la tecnología para identificar en reportes o logs.
+base_url = "http://api.generictechnology.com" # URL base de la API, no debe incluir una barra (/) al final.
+api_token = "your_api_token_here" # Token de autenticación utilizado para acceder a la API.
+authentication = "Bearer" # Método de autenticación actual (se admiten distintos métodos en futuras versiones).
+expiration_date_token = 2024-12-31T23:59:59-04:00 # Fecha opcional de vencimiento del token, se usa para alertar sobre su expiración.
+log_sources_ids = [1001, 1002] # IDs opcionales de las fuentes de logs de LogRhythm asociadas con esta tecnología.
+max_num_files = 10 # Número máximo de archivos manejados por el logger rotativo (estático se admitirá en el futuro).
+max_file_size = "10 MB" # Tamaño máximo de cada archivo de log.
+pagination = { next_link_key = "next", items_key = "items" } # Configuración de paginación para APIs que devuelven resultados paginados.
 
-[company_example.technology_one.source_two]
-enabled = true
-name = "Source Two"
-endpoint = "/api/source_two"
-method = "POST"
-headers = { Authorization = "Bearer your_token_here" }
-querystring = { limit = 50, startDateTime = "10 minutes ago", endDateTime = "now" }
+# ----------------------------------------- #
+# - Sources within the Technology - #
+# ----------------------------------------- #
 
-# Example for another technology integration
-[company_example.technology_two]
-enabled = false
-source_name = "Technology Two"
-base_url = "http://example2.com"
-api_token = "your_second_api_token_here"
-authentication = "Bearer"
-log_sources_ids = [201, 202, 203]
-max_num_files = 5
-max_file_size = "5 MB"
+# Configuración de una fuente dentro de la tecnología
+[entity_generic.technology_one.source_one]
+enabled = true # Activa o desactiva esta fuente específica dentro de la tecnología.
+interval = 300 # Tiempo en segundos para que el scheduler consulte este endpoint.
+endpoint = "/v1/source_one" # Endpoint específico de la API para esta fuente.
+method = "GET" # Método HTTP utilizado para la solicitud.
+headers = { Authorization = "Bearer your_api_token_here" } # Cabeceras HTTP adicionales necesarias para la solicitud.
 
-[company_example.technology_two.source_one]
-enabled = true
-name = "Source One for Technology Two"
-endpoint = "/api/v1/logs"
-method = "GET"
-headers = { Filter = "(level eq 'error')" }
-[company_example.technology_two.source_one.querystring]
-orderBy = "loggedDateTime desc"
-top = 200
-labels = "matched"
-startDateTime = { type = "ISO8601", value = "5 minutes ago" }
-endDateTime = { type = "ISO8601", value = "just now" }
+# Parámetros de consulta (querystring) en una sola línea
+querystring = { limit = 100, startDateTime = { type = "%Y-%m-%dT%H:%M:%SZ", value = "10 minutes ago" }, endDateTime = { type = "%Y-%m-%dT%H:%M:%SZ", value = "now" } }
+
+# Configuración de otra fuente con un querystring más extenso
+[entity_generic.technology_one.source_two]
+enabled = true # Activación de esta fuente.
+interval = 600 # Tiempo en segundos para que el scheduler consulte este endpoint.
+endpoint = "/v1/source_two" # Endpoint para esta fuente.
+method = "POST" # Método HTTP utilizado.
+headers = { Filter = "(status eq 'active')" } # Filtro aplicado como cabecera en la solicitud.
+
+# Parámetros de consulta (querystring) usando la forma extendida
+[entity_generic.technology_one.source_two.querystring]
+limit = 50
+startDateTime = { type = "%Y-%m-%dT%H:%M:%SZ", value = "30 minutes ago" }
+endDateTime = { type = "%Y-%m-%dT%H:%M:%SZ", value = "now" }
+orderBy = "createdDateTime desc"
+filter = "(status eq 'active')"
+
+# ------------------------------------------ #
+# - Source with Dependencies Configuration - #
+# ------------------------------------------ #
+
+# Fuente con dependencias dentro de la tecnología
+[entity_generic.technology_one.dependent_source]
+enabled = true # Activa esta fuente dependiente.
+endpoint = "/v1/dependent/{resource_id}" # Endpoint que depende de un valor extraído de una fuente principal.
+method = "GET" # Método HTTP utilizado.
+extract_from = "source_one.id" # Valor extraído de 'source_one' para reemplazar en el endpoint.
+replace_in = { resource_id = "source_one" } # Define qué valor extraído reemplaza el recurso en el endpoint.
+
+# Nota: Las fuentes dependientes no pueden tener su propio 'interval'. El intervalo será el mismo de la fuente principal de la que depende.
+
+dependencies = ["source_one"] # Esta fuente depende de la fuente 'source_one', por lo que no tiene un intervalo propio.
