@@ -7,7 +7,7 @@ from os import path
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from app import Config
+    from app.config import Config
 
 def configure_logger(debug: bool, verbose: bool) -> logging.Logger:
     logger = logging.getLogger("applogger")
