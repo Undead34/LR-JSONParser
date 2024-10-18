@@ -5,7 +5,7 @@ import schedule
 
 from utils.logger import get_logger, print_status
 from utils import topological_sort
-from utils.app import process_entities, identify_isolated_technologies, schedule_isolated_technologies
+from utils.app import process_entities, identify_isolated_technologies, schedule_isolated_technologies, schedule_dependencies
 from .config import Config
 
 
@@ -43,7 +43,14 @@ def run_main_program(args, config: Config) -> None:
     # Ordenar las fuentes restantes topológicamente
     try:
         sorted_sources = topological_sort(dependency_graph_without_isolated)
-        print(sorted_sources)
+        
+        modified_sources = []
+        
+        for source_name in sorted_sources:
+            tech_config, source_config = source_config_map[source_name]
+            modified_sources.append((tech_config, source_config, source_name))
+        
+        schedule_dependencies(modified_sources, entities_path)
     except Exception as e:
         logger.exception("Error en el ordenamiento topológico", exc_info=e)
 

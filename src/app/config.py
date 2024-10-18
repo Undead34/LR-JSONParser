@@ -13,7 +13,7 @@ class SourceConfig:
     headers: Dict[str, Any] = field(default_factory=dict)
     querystring: Dict[str, Any] = field(default_factory=dict)
     dependencies: List[str] = field(default_factory=list)
-    extract_from: Optional[str] = None
+    extract_from: Optional[Dict[str, Any]] = None
 
 @dataclass
 class TechnologyConfig:
@@ -92,7 +92,7 @@ def load_config(file_path: str) -> Config:
                 
                 source_config = SourceConfig(
                     enabled=source_data.get("enabled", False),
-                    interval=source_data.get("interval", 60 * 5),
+                    interval=source_data.get("interval", None),
                     name=source_data.get("name", ""),
                     endpoint=source_data.get("endpoint", ""),
                     method=source_data.get("method", ""),
