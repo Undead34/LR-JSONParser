@@ -2,6 +2,16 @@ import winreg
 import arrow
 import os
 
+from rich import pretty
+from rich.console import Console
+from io import StringIO
+
+def format_text(text: str) -> str:
+        console = Console(file=StringIO())
+        console.print(pretty.Pretty(text))
+        formatted_text = console.file.getvalue()
+        return formatted_text
+
 def get_agent_state_path(log_source_id) -> str:
     try:
         key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\LogRhythm\scsm")
