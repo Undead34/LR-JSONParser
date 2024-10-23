@@ -131,149 +131,54 @@ def schedule_dependencies(dependencies_sources: 'DependentSources', entities_pat
 
         if source_config.dependencies and source_config.extract_from:
             for dependency_name in source_config.dependencies:
-                if not dependency_name in processed_results_dict:
+                if dependency_name not in processed_results_dict:
                     raise ValueError(f"No se encontraron resultados para la dependencia '{dependency_name}'")
-            
+
+            to_process = []
+
             for param, path_str in source_config.extract_from.items():
                 path_keys = path_str.split(".")
                 first_key = path_keys[0]
 
-                if not first_key in processed_results_dict:
+                if first_key not in processed_results_dict:
                     raise ValueError(f"No se encontraron resultados para la clave '{first_key}' en el diccionario global")
 
-                current_data = processed_results_dict[first_key]
-                remaining_keys = path_keys[1:]
+                processed_data = processed_results_dict[first_key]
 
-                logger.debug(f"Extrayendo '{param}' de '{dependency_name}' con la ruta: {path_keys}")
+                if not isinstance(processed_data, list):
+                    extracted_values = extract_values_from_path(processed_data, path_keys[1:])
 
-                extracted_values = extract_values_from_path(current_data, remaining_keys)
-                
-                logger.debug(f"Valores extraídos para '{param}': {extracted_values}")
+                    for extracted_value in extracted_values:
+                        source_config_copy = deepcopy(source_config)
+                        source_config_copy.endpoint = source_config_copy.endpoint.replace(f"{{{param}}}", str(extracted_value))
+                        to_process.append((source_config_copy, str(extracted_value)))
+                else:
+                    for processed_data_item in processed_data:
+                        if "extracted_value" not in processed_data_item or "result" not in processed_data_item:
+                            raise ValueError(f"El diccionario de resultados no tiene el formato esperado")
+                        
+                        extracted_value = processed_data_item["extracted_value"]
+                        result = processed_data_item["result"]
 
-                # Procesar cada valor extraído de manera individual
-                for value in extracted_values:
-                    # Creamos una copia del source_config para cada valor extraído
-                    source_config_copy = deepcopy(source_config)
-                    source_config_copy.endpoint = source_config_copy.endpoint.replace(f"{{{param}}}", str(value))
+                        extracted_values = extract_values_from_path(result, path_keys[1:])
 
-                    # Procesar el endpoint con el valor reemplazado
-                    result = process_source(dependencies_sources.technology_config, source_config_copy, source_logger)
+                        for extracted_value in extracted_values:
+                            for i in range(len(to_process)):
+                                if to_process[i][0].name == source_config.name:
+                                    source_config_copy = deepcopy(to_process[i][0])
+                                    source_config_copy.endpoint = source_config_copy.endpoint.replace(f"{{{param}}}", str(extracted_value))
+                                    to_process[i] = (source_config_copy, str(extracted_value))
 
-                    # Guardar o acumular los resultados según sea necesario
-                    if source_name in processed_results_dict:
-                        existing_results = processed_results_dict[source_name]
-                        if isinstance(existing_results, list):
-                            existing_results.append(result)
-                        else:
-                            processed_results_dict[source_name] = [existing_results, result]
-                    else:
-                        processed_results_dict[source_name] = result
-
-        result = process_source(dependencies_sources.technology_config, source_config, source_logger)
-
-        # Guardar o acumular los resultados según sea necesario
-        if source_name in processed_results_dict:
-            existing_results = processed_results_dict[source_name]
-            if isinstance(existing_results, list):
-                existing_results.append(result)
-            else:
-                processed_results_dict[source_name] = [existing_results, result]
+            process_results = []
+            for source_config_copy, extracted_value in to_process:
+                result = process_source(dependencies_sources.technology_config, source_config_copy, source_logger)
+                process_results.append({
+                    'extracted_value': extracted_value,
+                    'result': result
+                })
+            processed_results_dict[source_name] = process_results
         else:
+            result = process_source(dependencies_sources.technology_config, source_config, source_logger)
             processed_results_dict[source_name] = result
 
-    # logger = get_logger()
-
-    # # Diccionario global para almacenar todos los resultados
-
-
-    # # Función auxiliar para procesar una fuente y sus dependencias
-    # def process_source_with_dependencies(tech_config: 'TechnologyConfig', source_config: 'SourceConfig', source_xpath):
-    #     entity_name, tech_name, source_name = source_xpath.split(".")
-    #     if source_name in processed_sources:
-    #         return  # Ya procesado
-
-    #     # Procesar dependencias primero
-    #     if source_config.dependencies:
-    #         for dependency_name in source_config.dependencies:
-    #             # Verificar si la dependencia ya ha sido procesada
-    #             if dependency_name not in processed_sources:
-    #                 # Buscar la fuente de la que depende
-    #                 dependency = next(
-    #                     (t, s, x) for t, s, x in dependency_graph if x.endswith(dependency_name)
-    #                 )
-    #                 process_source_with_dependencies(*dependency)
-
-    #     # Ahora procesar la fuente actual
-    #     source_path = path.join(entities_path, entity_name, tech_name, source_name)
-    #     os.makedirs(source_path, exist_ok=True)
-    #     source_logger = setup_source_logger(
-    #         source_xpath, source_path,
-    #         max_num_files=tech_config.max_num_files,
-    #         max_file_size=tech_config.max_file_size
-    #     )
-
-    #     # Si la fuente tiene extract_from y replace_in, procesamos los valores necesarios
-    #     if source_config.dependencies and source_config.extract_from:
-    #         # Obtener los resultados de las dependencias
-    #         for dependency_name in source_config.dependencies:
-    #             dependency_results = processed_results_dict.get(dependency_name)
-    #             if not dependency_results:
-    #                 raise ValueError(f"No se encontraron resultados para la dependencia '{dependency_name}'")
-
-    #             # Iteramos sobre las claves en `extract_from`
-    #             for param, path_str in source_config.extract_from.items():
-    #                 path_keys = path_str.split(".")  # Dividimos la cadena en claves
-
-    #                # Usamos la primera clave para buscar en el diccionario global
-    #                 first_key = path_keys[0]
-    #                 if first_key not in processed_results_dict:
-    #                     raise ValueError(f"No se encontraron resultados para la clave '{first_key}' en el diccionario global")
-                    
-    #                 # Tomamos los resultados iniciales de la primera clave
-    #                 current_data = processed_results_dict[first_key]
-                    
-    #                 # Continuamos con las claves restantes
-    #                 remaining_keys = path_keys[1:]
-
-    #                 logger.debug(f"Extrayendo '{param}' de '{dependency_name}' con la ruta: {path_keys}")
-
-    #                 # Extraemos los valores finales siguiendo la ruta de claves
-    #                 extracted_values = extract_values_from_path(current_data, remaining_keys)
-    #                 logger.debug(f"Valores extraídos para '{param}': {extracted_values}")
-
-    #                 # Para cada valor extraído, reemplazar en el endpoint
-    #                 for value in extracted_values:
-    #                     updated_source_config = deepcopy(source_config)
-    #                     # Reemplazar el parámetro en el endpoint
-    #                     if param in updated_source_config.extract_from:
-    #                         updated_source_config.endpoint = updated_source_config.endpoint.replace(
-    #                             f"{{{param}}}", str(value)
-    #                         )
-
-
-    #                     # Procesar la fuente con el endpoint actualizado
-    #                     # logger.info(f"Procesando fuente '{updated_source_config}' con el endpoint actualizado")
-    #                     result = process_source(tech_config, updated_source_config, source_logger)
-
-    #                     # Guardar o acumular los resultados según sea necesario
-    #                     if source_name in processed_results_dict:
-    #                         # Si ya hay resultados, agregamos el nuevo
-    #                         existing_results = processed_results_dict[source_name]
-    #                         if isinstance(existing_results, list):
-    #                             existing_results.append(result)
-    #                         else:
-    #                             processed_results_dict[source_name] = [existing_results, result]
-    #                     else:
-    #                         processed_results_dict[source_name] = result
-
-    #     else:
-    #         # Fuente sin dependencias o sin reemplazos, procesamos directamente
-    #         result = process_source(tech_config, source_config, source_logger)
-    #         processed_results_dict[source_name] = result
-
-    #     # Marcar la fuente como procesada
-    #     processed_sources.add(source_name)
-
-    # # Procesar todas las fuentes
-    # for tech_config, source_config, source_xpath in dependency_graph:
-    #     process_source_with_dependencies(tech_config, source_config, source_xpath)
+    return processed_results_dict

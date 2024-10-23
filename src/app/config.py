@@ -15,7 +15,7 @@ class SourceConfig:
     headers: Dict[str, Any] = field(default_factory=dict)
     querystring: Dict[str, Any] = field(default_factory=dict)
     dependencies: List[str] = field(default_factory=list)
-    extract_from: Optional[Dict[str, Any]] = None
+    extract_from: Optional[Dict[str, str]] = None
 
     def __hash__(self):
         def make_hashable(value):

@@ -15,6 +15,8 @@ from app import run_interactive_mode, run_main_program
 from app.config import load_config
 
 def main():
+    # sys.argv += ["-d", "--config-file", ".\config.toml"]
+
     args = parse_arguments()
     logger = configure_logger(args.debug, args.verbose)
     init(autoreset=True)
