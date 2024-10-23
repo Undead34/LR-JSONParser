@@ -7,7 +7,7 @@ from collections import defaultdict
 from utils.logger import get_logger
 from utils import topological_sort
 from utils.app import process_entities, schedule_isolated, schedule_dependencies
-from .config import DependentSources
+from .config import DependentSources, IsolatedSources
 
 
 from typing import TYPE_CHECKING
@@ -22,7 +22,7 @@ def run_interactive_mode(args) -> 'Config':
     logger = get_logger()
     return config
 
-def classify_sources(config: 'Config', entities_path) -> List[Tuple[DependentSources, Set[Tuple['SourceConfig', str]], Tuple[str, str]]]:
+def classify_sources(config: 'Config', entities_path) -> List[Tuple[DependentSources, IsolatedSources, Tuple[str, str]]]:
     logger = get_logger()
 
     # Procesar entidades y construir el grafo de dependencias
@@ -36,8 +36,8 @@ def classify_sources(config: 'Config', entities_path) -> List[Tuple[DependentSou
 
         sources = cast(List[Tuple['SourceConfig', str]], sources)
 
-        isolated_sources: Set[SourceConfig] = set()
-        dependent_sources: Set[SourceConfig] = set()
+        isolated_sources: Set[Tuple['SourceConfig', str]] = set()
+        dependent_sources: Set[Tuple['SourceConfig', str]] = set()
 
         # Paso 1: Identificar las fuentes que tienen dependencias
         for source_config, source_name in sources:
@@ -96,13 +96,19 @@ def classify_sources(config: 'Config', entities_path) -> List[Tuple[DependentSou
                 sources = sorted_sources
             )
 
-            entities_technologies.append((dependent_sources, isolated_sources, names))
+            _isolated_sources = IsolatedSources(
+                entity_config = entity_config,
+                technology_config = tech_config,
+                sources_name = [name for _, name in isolated_sources],
+                sources = isolated_sources
+            )
+
+            entities_technologies.append((dependent_sources, _isolated_sources, names))
 
         except Exception as e:
             logger.exception("Error en el ordenamiento topológico", exc_info=e)
 
     return entities_technologies
-
 
 def run_main_program(args, config: 'Config') -> None:
     logger = get_logger()
@@ -121,11 +127,11 @@ def run_main_program(args, config: 'Config') -> None:
         rich.print(f"[bold]Entidad:[/bold] {dependencies_sources.entity_config.name}")
         rich.print(f"[bold]Tecnología:[/bold] {dependencies_sources.technology_config.source_name}")
         rich.print(f"[bold]Fuentes dependientes:[/bold] {dependencies_sources.sources_name}")
-        rich.print(f"[bold]Fuentes aisladas:[/bold] {[source_name for _, source_name in isolated_sources]}")
+        rich.print(f"[bold]Fuentes aisladas:[/bold] {[source_name for _, source_name in isolated_sources.sources]}")
         rich.print("_" * 80)
 
         schedule_dependencies(dependencies_sources, entities_path, names)
-        # schedule_isolated(isolated_sources, entities_path)
+        schedule_isolated(isolated_sources, entities_path, names)
 
     while True:
         schedule.run_pending()

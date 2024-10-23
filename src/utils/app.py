@@ -13,9 +13,9 @@ from app.apis import process_source
 from . import querystring_parse
 
 from typing import TYPE_CHECKING
-from typing import List, Tuple
+from typing import List, Tuple, Set
 if TYPE_CHECKING:
-    from app.config import Config, SourceConfig, TechnologyConfig, DependentSources
+    from app.config import Config, IsolatedSources, DependentSources
 
 def process_entities(config: 'Config', logger):
     source_graph = defaultdict(list)
@@ -55,31 +55,28 @@ def process_entities(config: 'Config', logger):
 
     return source_graph
 
-def schedule_source(entity_name: str, tech_name: str, source_name: str, tech_config, source_config, entities_path: str):
-    logger = get_logger()
-    source_path = path.join(entities_path, entity_name, tech_name, source_name)
-    os.makedirs(source_path, exist_ok=True)
-    logger_name = f"{entity_name}.{tech_name}.{source_name}"
+def schedule_isolated(isolated_sources: 'IsolatedSources', entities_path: str, names: Tuple[str, str]):
+    entity_config, tech_config = isolated_sources.entity_config, isolated_sources.technology_config
 
-    querystring_parse(source_config)
+    for source_config, source_name in isolated_sources.sources:
+        logger = get_logger()
+        entity_name, tech_name = names
+        source_path = path.join(entities_path, entity_name, tech_name, source_name)
+        os.makedirs(source_path, exist_ok=True)
+        logger_name = f"{entity_name}.{tech_name}.{source_name}"
 
-    source_logger = setup_source_logger(
-        logger_name, source_path,
-        max_num_files=tech_config.max_num_files,
-        max_file_size=tech_config.max_file_size
-    )
+        querystring_parse(source_config)
 
-    schedule.every(source_config.interval).seconds.do(
-        process_source, tech_config, source_config, source_logger
-    )
-    logger.info(f"Fuente programada: {source_name}")
+        source_logger = setup_source_logger(
+            logger_name, source_path,
+            max_num_files=tech_config.max_num_files,
+            max_file_size=tech_config.max_file_size
+        )
 
-def schedule_isolated(isolated_technologies, source_config_map, entities_path):
-    """Programa las tecnologías aisladas."""
-    for tech in isolated_technologies:
-        entity_name, tech_name, source_name = tech.split(".")
-        tech_config, source_config = source_config_map[tech]
-        schedule_source(entity_name, tech_name, source_name, tech_config, source_config, entities_path)
+        schedule.every(source_config.interval).seconds.do(
+            process_source, tech_config, source_config, source_logger
+        )
+        logger.info(f"Fuente programada: {source_name}")
 
 def extract_values_from_path(data, keys):
     """

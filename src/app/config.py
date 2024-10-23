@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Tuple, Dict, Any, List, Optional
+from typing import Tuple, Dict, Any, List, Optional, Set
 import toml
 from toml.decoder import InlineTableDict
 from datetime import datetime
@@ -84,6 +84,14 @@ class Config:
     version: str
     developer: str
     entities: Dict[str, EntityConfig] = field(default_factory=dict)
+
+
+@dataclass
+class IsolatedSources:
+    entity_config: EntityConfig
+    technology_config: TechnologyConfig
+    sources_name: List[str]
+    sources: Set[Tuple['SourceConfig', str]]
 
 @dataclass
 class DependentSources:
