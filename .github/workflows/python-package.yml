@@ -24,12 +24,6 @@ jobs:
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install pyinstaller
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-
       - name: Check version
         id: version_check
         run: |
@@ -37,6 +31,12 @@ jobs:
           echo "Current version is $version"
           echo "version=$version" >> $GITHUB_ENV
         shell: bash
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pyinstaller
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: Verify GitHub tag existence
         id: tag_check
