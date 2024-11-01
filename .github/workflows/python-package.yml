@@ -56,7 +56,7 @@ jobs:
       - name: Package as ZIP
         run: |
           mkdir -p release
-          cp dist/main ./release
+          cp -r dist/main ./release
           cd release
           zip -r ../LR-JSONParser-v${{ env.version }}.zip ./*
     
