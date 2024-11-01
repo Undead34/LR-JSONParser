@@ -70,3 +70,4 @@ jobs:
           files: "LR-JSONParser-v${{ env.version }}.zip"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
