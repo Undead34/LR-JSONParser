@@ -1,0 +1,50 @@
+name: Python Build Release
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'src/version.py'
+      - 'requirements.txt'
+      - 'CHANGELOG.md'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10.x'
+          architecture: 'x64'
+
+      - name: Display Python version
+        run: python -c "import sys; print(sys.version)"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pyinstaller
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Check version
+        id: version_check
+        run: |
+          version=$(python -c "from src.version import __version__; print(__version__)")
+          echo "Current version is $version"
+          echo "version=$version" >> $GITHUB_ENV
+        shell: bash
+
+      - name: Verify GitHub tag existence
+        id: tag_check
+        run: |
+          if git ls-remote --exit-code --tags origin "refs/tags/v${{ env.version }}" ; then
+            echo "Tag v${{ env.version }} already exists. Skipping release."
+            exit 1
+          else
+            echo "Tag v${{ env.version }} does not exist. Continuing."
+          fi
+        shell: bash
