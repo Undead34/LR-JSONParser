@@ -15,12 +15,7 @@ from typing import Tuple, List, Set, cast
 if TYPE_CHECKING:
     from .config import Config, EntityConfig, TechnologyConfig, SourceConfig
 
-
 import rich
-
-def run_interactive_mode(args) -> 'Config':
-    logger = get_logger()
-    return config
 
 def classify_sources(config: 'Config', entities_path) -> List[Tuple[DependentSources, IsolatedSources, Tuple[str, str]]]:
     logger = get_logger()
