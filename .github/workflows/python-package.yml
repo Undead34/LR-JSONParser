@@ -48,3 +48,25 @@ jobs:
             echo "Tag v${{ env.version }} does not exist. Continuing."
           fi
         shell: bash
+
+      - name: Build with pyinstaller
+        run: |
+          pyinstaller --noconfirm --clean --paths=src src/main.py
+      
+      - name: Package as ZIP
+        run: |
+          mkdir -p release
+          cp dist/main ./release
+          cd release
+          zip -r ../LR-JSONParser-v${{ env.version }}.zip ./*
+    
+      - name: Create GitHub Release
+        if: ${{ github.ref == 'refs/heads/main' && steps.tag_check.outcome != 'failure' }}
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: "v${{ env.version }}"
+          name: "Release v${{ env.version }}"
+          body: "New Release v${{ env.version }}"
+          files: "LR-JSONParser-v${{ env.version }}.zip"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
