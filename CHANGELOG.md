@@ -1,17 +1,12 @@
-## [1.2.4] - 2017-03-15
+## [0.1.2] - 2024-11-01
   
-Here we would have the update steps for 1.2.4 for people to follow.
+Fix workflows
  
 ### Added
  
 ### Changed
-  
-- [PROJECTNAME-ZZZZ](http://tickets.projectname.com/browse/PROJECTNAME-ZZZZ)
-  PATCH Drupal.org is now used for composer.
- 
+   
 ### Fixed
  
-- [PROJECTNAME-TTTT](http://tickets.projectname.com/browse/PROJECTNAME-TTTT)
-  PATCH Add logic to runsheet teaser delete to delete corresponding
-  schedule cards.
+- [python-package.yml](.github\workflows\python-package.yml): Fix
  
